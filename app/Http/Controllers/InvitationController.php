@@ -6,23 +6,26 @@ namespace App\Http\Controllers;
 use App\Models\Invitation;
 use Illuminate\Http\Request;
 
+// Halaman undangan publik. Pembuatan & pengelolaan ada di Dashboard\InvitationController.
 class InvitationController extends Controller
 {
-    public function show(Request $request)
+    public function show(Request $request, Invitation $invitation)
     {
-        $invitation = Invitation::where('is_active', true)
-            ->with([
-                'galleries',
-                'wishes' => fn($q) => $q->where('is_approved', true)->latest()->limit(10),
-            ])
-            ->firstOrFail();
+        $invitation->load('galleries');
 
-        $guestName = $request->query('to', 'Tamu Undangan');
+        $wishes = $invitation->wishes()->where('is_approved', true)->limit(10)->get();
 
-        
-        // Pisahkan $wishes sebagai variabel tersendiri agar bisa diakses di view
-        $wishes = $invitation->wishes;
-        return view('invitation.show', compact('invitation', 'guestName', 'wishes'));
+        // Nama tamu dari /{slug}?to=Nama+Tamu
+        $guestName = trim((string) $request->query('to')) ?: 'Tamu Undangan';
 
+        // Load view sesuai tema yang dipilih
+        $theme = $invitation->theme ?: 'netflix';
+        $view = "themes.{$theme}.show";
+
+        if (! view()->exists($view)) {
+            $view = 'themes.netflix.show';
+        }
+
+        return view($view, compact('invitation', 'guestName', 'wishes'));
     }
 }

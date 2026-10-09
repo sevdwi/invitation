@@ -5,19 +5,13 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreRsvpRequest;
 use App\Models\Invitation;
-use App\Models\Rsvp;
 use Illuminate\Http\JsonResponse;
 
 class RsvpController extends Controller
 {
-    public function store(StoreRsvpRequest $request): JsonResponse
+    public function store(StoreRsvpRequest $request, Invitation $invitation): JsonResponse
     {
-        $invitation = Invitation::where('is_active', true)->firstOrFail();
-
-        Rsvp::create([
-            ...$request->validated(),
-            'invitation_id' => $invitation->id,
-        ]);
+        $invitation->rsvps()->create($request->validated());
 
         return response()->json([
             'success' => true,

@@ -5,20 +5,15 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreWishRequest;
 use App\Models\Invitation;
-use App\Models\Wish;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 
 class WishController extends Controller
 {
-    public function store(StoreWishRequest $request): JsonResponse
+    public function store(StoreWishRequest $request, Invitation $invitation): JsonResponse
     {
-        $invitation = Invitation::where('is_active', true)->firstOrFail();
-
-        $wish = Wish::create([
+        $wish = $invitation->wishes()->create([
             ...$request->validated(),
-            'invitation_id' => $invitation->id,
-            'sender_ip'     => $request->ip(),
+            'sender_ip' => $request->ip(),
         ]);
 
         return response()->json([
@@ -33,10 +28,8 @@ class WishController extends Controller
         ]);
     }
 
-    public function index(Request $request): JsonResponse
+    public function index(Invitation $invitation): JsonResponse
     {
-        $invitation = Invitation::where('is_active', true)->firstOrFail();
-
         $wishes = $invitation->wishes()
             ->where('is_approved', true)
             ->paginate(10);
